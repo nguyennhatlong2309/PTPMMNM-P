@@ -25,6 +25,7 @@ from .read_file import get_text
 #         return self.VStoreHanle.querry(question)
 
 
+
 # service_instance  = service()
 def embed_text(request):
     text = request.GET.get("text", "")

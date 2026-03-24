@@ -1,59 +1,114 @@
-
-
-
-
 from langchain_community.vectorstores import FAISS
+import read_file
+from langchain_community.llms import Ollama
+from langchain.chains.retrieval_qa.base import RetrievalQA
+from langchain.prompts import PromptTemplate
+
 
 class vectorStoreHandle():
     def __init__(self):
         from langchain_huggingface import HuggingFaceEmbeddings
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
-        self.vector_store = None
 
+        self.embeddings = HuggingFaceEmbeddings(model_name="./hf_models")
 
-    def create_store(self,texts):
-        chunks = self.spliter_chunks(texts)
-        self.vector_store = FAISS.from_texts(chunks,self.embeddings)
-    
-    def spliter_chunks(self,text):
-        from langchain_text_splitters import RecursiveCharacterTextSplitter
-        chunks = RecursiveCharacterTextSplitter(chunk_size=4000, chunk_overlap=300).create_documents(text)
-        return chunks
-
-    def saveVectorStore(self):
-        self.vector_store.save_local("demo_index")
-
-    def loadVectorStore(self):
-        try: 
-            self.vector_store = FAISS.load_local("demo_index",self.embeddings)
+        try:
+            self.vector_store = FAISS.load_local(
+                "./demo_index",
+                self.embeddings,
+                allow_dangerous_deserialization=True
+            )
         except:
             self.vector_store = None
 
-    def add_data(self,texts):
+        self.retriever = None
+        if self.vector_store:
+            self.retriever = self.vector_store.as_retriever(search_kwargs={"k":3})
+
+        self.llm = Ollama(model="llama3")
+
+        self.prompt = PromptTemplate(
+            input_variables=["context", "question"],
+            template="""
+                Bạn là trợ lý AI.
+
+                BẮT BUỘC: Luôn trả lời bằng TIẾNG VIỆT, không được dùng tiếng Anh
+                Chỉ được trả lời dựa trên tài liệu dưới đây.
+                Nếu không có thông tin, hãy nói: "Tôi không biết".
+                
+                Tài liệu:
+                {context}
+
+                Câu hỏi:
+                {question}
+
+                Trả lời:
+"""
+        )
+
+        if self.retriever:
+            self.qa_chain = RetrievalQA.from_chain_type(
+                llm=self.llm,
+                retriever=self.retriever,
+                chain_type="stuff",
+                chain_type_kwargs={"prompt": self.prompt}
+            )
+
+    def ask(self, question):
+        if not self.vector_store:
+            return "Chưa có dữ liệu"
+        
+        answer = self.qa_chain.invoke({"query": question})["result"]
+        return answer
+
+    def create_store(self, texts):
+        chunks = self.spliter_chunks(texts)
+        
+        # tạo vector store
+        self.vector_store = FAISS.from_documents(chunks, self.embeddings)
+        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 3})
+
+        self.qa_chain = RetrievalQA.from_chain_type(
+            llm=self.llm,
+            retriever=self.retriever,
+            chain_type="stuff",
+            chain_type_kwargs={"prompt": self.prompt}
+        )
+        self.saveVectorStore()
+
+    def spliter_chunks(self, texts):
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+        if isinstance(texts, str):
+            texts = [texts]
+
+        return RecursiveCharacterTextSplitter(
+            chunk_size=500,
+            chunk_overlap=100
+        ).create_documents(texts)
+
+    def saveVectorStore(self):
+        self.vector_store.save_local("./demo_index")
+        print("da luu vector store")
+
+    def add_data(self, texts):
+        chunks = self.spliter_chunks(texts)
+
         if self.vector_store is None:
-            self.create_store(texts)
-        else :
-            chunks = self.spliter_chunks(texts)
-            self.vector_store.add_data(chunks)
+            self.vector_store = FAISS.from_documents(chunks, self.embeddings)
+        else:
+            self.vector_store.add_documents(chunks)
 
-    def querry(self,quesstion):
-        if self.vector_store is not None:
-            return self.vector_store.similarity_search(quesstion,k=3)
-        else :
-            return "Vector Store không có dữ liệu."
-        
-        
+        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 3})
 
+        self.qa_chain = RetrievalQA.from_chain_type(
+            llm=self.llm,
+            retriever=self.retriever,
+            chain_type="stuff"
+        )
+        self.vector_store.save_local("./demo_index")
 
+VTH = vectorStoreHandle()
 
-    
+docs = VTH.ask("câu chuyện kể vè nội dung gì?")
 
-
-
-
-
-    
-    
-
+print(docs)

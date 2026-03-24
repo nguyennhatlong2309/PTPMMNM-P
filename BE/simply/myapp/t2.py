@@ -1,37 +1,37 @@
-from pdf2image import convert_from_path
-import pytesseract
-import pdfplumber
-import fitz
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+import os
+file_path = r"C:\Users\Lenovo\ptpmmnm\demo\PTPMMNM-P\BE\simply\myapp\demo_index"
+import time
 
+start_time = time.time()
 
+embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
 
-def is_scan_pdf(file_path, max_pages=10, threshold=100):
-    doc = fitz.open(file_path)
-    total_text = 0
+end_time = time.time() 
+print(f"Thời gian load vector store: {end_time - start_time:.2f} giây")
 
-    for page in doc[:max_pages]:
-        total_text += len(page.get_text().strip())
-
-    return total_text < threshold
-
-
-def get_text(file_path):
-    t = ""
-   
-    if is_scan_pdf(file_path):
-        pages = convert_from_path(file_path)
-        for page in pages:
-            t += pytesseract.image_to_string(page)
+def loadVectorStore():
+    import os
+    path = os.path.join(os.path.dirname(file_path), "demo_index")
+    print("Đang load vector store từ:", path)
+    if os.path.exists(path):
+        print("Folder tồn tại")
+    else:
+        print("Folder không tồn tại")
+    try: 
+        vector_store = FAISS.load_local(path, embeddings,allow_dangerous_deserialization=True)
+    except Exception as e:
+        print("Lỗi khi load:", e)
+        vector_store = None
     
-    else :
-        with pdfplumber.open(file_path) as pdf:
-            for page in pdf.pages:
-                text = page.extract_text()
-                if text :
-                    t+= text + "\n"
-    
-    return t
+    return vector_store
 
+start_time1 = time.time()
 
-file_path = "RRTO.pdf"
-print(get_text(file_path))
+loadVectorStore()
+
+end_time1 = time.time()
+print(f"Thời gian load vector store: {end_time1 - start_time1:.2f} giây")
