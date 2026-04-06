@@ -9,13 +9,12 @@
 
 /* Sidebar bên trái */
 .sidebar {
-  width: 320px;
-  min-width: 320px;
+  width: 250px;
+  min-width: 250px;
   background-color: white;
   border-right: 1px solid #e5e7eb;
   display: flex;
   flex-direction: column;
-  padding: 24px;
   box-sizing: border-box;
 }
 
@@ -29,14 +28,61 @@
 .dropzone {
   border: 2px dashed #e5e7eb;
   border-radius: 12px;
-  padding: 32px;
+  padding: 10px;
   text-align: center;
   background-color: #f9fafb;
-  margin-bottom: 16px;
+  margin: 0 24px 10px 24px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  gap: 10px;
+  overflow: auto;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
+  width: 100%;
+  gap: 10px;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #eeeeee;
+  padding: 10px 10px;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.remove-btn {
+  position: absolute;
+  display: flex;
+  top: 0px;
+  right: 0px;
+  border: none;
+  background: transparent;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 10px;
+  padding: 5px;
+  height: 15px;
+  /* border: solid 1px black; */
+  border-radius: 5px;
+}
+
+.remove-btn:hover {
+  background-color: #e78282;
 }
 
 .btn-process {
-  width: 100%;
+  width: 80%;
   padding: 12px;
   background-color: #ef4444;
   color: white;
@@ -44,7 +90,26 @@
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
-  margin-bottom: 32px;
+  /* margin-bottom: 32px; */
+  margin: 0 24px 32px 24px;
+}
+
+.history {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.session_chat {
+  /* width: 100%; */
+  height: 30px;
+  /* background-color: #c2c2c2; */
+  border: solid 1px black;
+  margin: 5px 10px;
+  border-radius: 10px;
+}
+
+.session_chat:hover {
+  background-color: #c2c2c2;
 }
 
 /* Khu vực Chat bên phải */
@@ -69,8 +134,12 @@
   flex-direction: column;
 }
 
-.user { align-items: flex-end; }
-.assistant { align-items: flex-start; }
+.user {
+  align-items: flex-end;
+}
+.assistant {
+  align-items: flex-start;
+}
 
 .bubble {
   max-width: 70%;
@@ -88,4 +157,8 @@
   background-color: #f3f4f6;
   border: 1px solid #e5e7eb;
   font-family: monospace;
+}
+* {
+  scrollbar-width: thin; /* nhỏ lại */
+  scrollbar-color: #888 #f1f1f1; /* thumb + track */
 }

@@ -1,26 +1,16 @@
-django
-youtube-transcript-api
-langchain
-langchain-core
-langchain_google_genai
-langchain-community
-faiss-cpu
-google-auth
-sentence-transformers
-langchain-huggingface
-
 
 django
 sentence_transformers
-pdfplumber
-pdf2image
+langchain                0.1.20
+langchain-community      0.0.38
+langchain-core           0.1.53
+langchain-huggingface    0.0.3
+langchain-text-splitters 0.0.1
+ollama
 pytesseract
-tesseract-ocr
-poppler-utils
-langchain_huggingface
-langchain_text_splitters
-langchain.vectorstores
-pymupdf
+pdf2image
 
-/apt 
-npm
+
+
+ollama pull phi
+ollama pull phi3:mini

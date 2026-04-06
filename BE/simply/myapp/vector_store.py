@@ -1,5 +1,5 @@
 from langchain_community.vectorstores import FAISS
-# import read_file
+from .read_file import get_text
 from langchain_community.llms import Ollama
 from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain.prompts import PromptTemplate
@@ -11,11 +11,11 @@ class vectorStoreHandle():
     def __init__(self):
         from langchain_huggingface import HuggingFaceEmbeddings
 
-        self.embeddings = HuggingFaceEmbeddings(model_name="./hf_models")
+        self.embeddings = HuggingFaceEmbeddings(model_name=r"/home/nhatlong/demo/PTPMMNM-P/BE/simply/myapp/hf_models")
 
         try:
             self.vector_store = FAISS.load_local(
-                "./demo_index",
+                r"./demo_index",
                 self.embeddings,
                 allow_dangerous_deserialization=True
             )
@@ -24,7 +24,7 @@ class vectorStoreHandle():
 
         self.retriever = None
         if self.vector_store:
-            self.retriever = self.vector_store.as_retriever(search_kwargs={"k":3})
+            self.retriever = self.vector_store.as_retriever(search_kwargs={"k":2})
 
         self.llm = Ollama(model="llama3:8b")
 
@@ -58,8 +58,17 @@ class vectorStoreHandle():
     def ask(self, question):
         if not self.vector_store:
             return "Chưa có dữ liệu"
-        
-        answer = self.qa_chain.invoke({"query": question})["result"]
+
+        docs = self.retriever.get_relevant_documents(question)
+
+        context = "\n".join([doc.page_content for doc in docs])
+
+        prompt = self.prompt.format(
+            context=context,
+            question=question
+        )
+
+        answer = self.llm.invoke(prompt)
         return answer
 
     def create_store(self, texts):
@@ -67,7 +76,7 @@ class vectorStoreHandle():
         
         # tạo vector store
         self.vector_store = FAISS.from_documents(chunks, self.embeddings)
-        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 3})
+        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 2})
 
         self.qa_chain = RetrievalQA.from_chain_type(
             llm=self.llm,
@@ -84,8 +93,8 @@ class vectorStoreHandle():
             texts = [texts]
 
         return RecursiveCharacterTextSplitter(
-            chunk_size=500,
-            chunk_overlap=100
+            chunk_size=300,
+            chunk_overlap=50
         ).create_documents(texts)
 
     def saveVectorStore(self):
@@ -100,21 +109,50 @@ class vectorStoreHandle():
         else:
             self.vector_store.add_documents(chunks)
 
-        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 3})
+        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 2})
 
         self.qa_chain = RetrievalQA.from_chain_type(
             llm=self.llm,
             retriever=self.retriever,
             chain_type="stuff"
         )
-        self.vector_store.save_local("./demo_index")
+        self.saveVectorStore()
+
+
 
 
 start = time.time()
 VTH = vectorStoreHandle()
-e1 = time.time()
-docs = VTH.ask("câu chuyện kể vè nội dung gì?")
-e2= time.time()
-print(docs)
 
-print(f"thoi gian khoi tao {e1-start:.2f} \nthoi gian truy xuat {e2-e1:.2f}")
+# with open("./RRTO.pdf","rb")as f:
+#     fileB = f.read()
+
+# texts = get_text(fileB,".pdf")
+# print(texts)
+
+
+# e = time.time()
+# print(f"thoi gian khoi tao {e-start:.2f}")
+# VTH.create_store(texts) 
+
+# ee = time.time()
+# print(f"thoi gian load text {e-start:.2f}\nthoi gian tao store {ee-e}")
+
+# texts = get_text(fileB,".pdf")
+# print(texts)
+# VTH.add_data(texts)
+
+
+e1= time.time()
+a1 = VTH.ask("nội dung của câu truyện rắc rối tình ơi là gì?")
+e2=time.time()
+print(a1)
+print(f"thoi gian truy van la {e2-e1:.2f}")
+# a2 =  VTH.ask("nội dung nói về nhân vật nào nhiều nhất?")
+# e3=time.time()
+# print(a2)
+# a3=VTH.ask("truyện có bao nhiêu nhân vật?")
+# e4=time.time()
+# print(a3)
+# print(f"thoi gian khoi tao {e-start:.2f}\nthoi gian khoi tao {e1-start:.2f} \nthoi gian tra loi lan 1 la {e2-e1:.2f}" )
+# print("thoi gian tra loi cau hoi thu 2 la: {e3-e2:.2f}\nthoi gian tra loi cau hoi thu 3 la: {e4-e3:.2f}")
